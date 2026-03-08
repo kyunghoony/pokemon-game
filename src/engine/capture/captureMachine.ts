@@ -15,11 +15,11 @@ export const createEncounter = (): CaptureEncounter => {
   };
 };
 
-export const advanceEncounter = (encounter: CaptureEncounter): CaptureEncounter => {
-  if (encounter.phase === 'encounter_intro') return { ...encounter, phase: 'ball_select', resultText: '볼을 선택해 던지세요.' };
-  if (encounter.phase === 'breakout') return { ...encounter, phase: 'encounter_continue', resultText: '탈출했다! 다시 시도할까요?' };
-  if (encounter.phase === 'encounter_continue') return { ...encounter, phase: 'ball_select', resultText: '다시 볼을 선택하세요.' };
-  return encounter;
+export const advanceEncounter = (encounter: CaptureEncounter): { next: CaptureEncounter; events: EngineEvent[] } => {
+  if (encounter.phase === 'encounter_intro') return { next: { ...encounter, phase: 'ball_select', resultText: '볼을 선택해 던지세요.' }, events: [] };
+  if (encounter.phase === 'breakout') return { next: { ...encounter, phase: 'encounter_continue', resultText: '탈출했다! 다시 시도할까요?' }, events: [] };
+  if (encounter.phase === 'encounter_continue') return { next: { ...encounter, phase: 'ball_select', resultText: '다시 볼을 선택하세요.' }, events: [] };
+  return { next: encounter, events: [{ type: 'EFFECT_MESSAGE', text: `진행 불가 상태입니다. phase=${encounter.phase}` }] };
 };
 
 export const throwBall = (
@@ -27,6 +27,10 @@ export const throwBall = (
   ballType: BallType,
   inventory: { charmLevel: number },
 ): { next: CaptureEncounter; events: EngineEvent[] } => {
+  if (encounter.phase !== 'ball_select') {
+    return { next: encounter, events: [{ type: 'EFFECT_MESSAGE', text: `볼 투척 불가 상태입니다. phase=${encounter.phase}` }] };
+  }
+
   const throwingState: CaptureEncounter = { ...encounter, selectedBall: ballType, phase: 'throwing', resultText: `${ballType} 볼 투척!` };
   const rolled = runCaptureRoll(throwingState, { ...inventory, balls: { poke: 0, great: 0, ultra: 0, master: 0 }, rainbowCandy: 0, typeCandy: {} }, ballType);
 

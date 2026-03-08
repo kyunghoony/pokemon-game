@@ -35,27 +35,27 @@ export const EncounterScene = ({ encounter, events, inventory, onStart, onAdvanc
           setBallFx(`ball-${ball}`);
           setBallAnim('throw');
           setStatus('볼을 던졌다!');
-          await new Promise((r) => setTimeout(r, 380));
+          await new Promise((r) => setTimeout(r, 420));
         }
         if (event.type === 'BALL_ABSORB') {
           setBallAnim('absorb');
           setStatus('포켓몬을 흡수 중...');
-          await new Promise((r) => setTimeout(r, 320));
+          await new Promise((r) => setTimeout(r, 340));
         }
         if (event.type === 'BALL_SHAKE') {
           setShakeCount((event.payload?.count as number) ?? 0);
           setBallAnim('shake');
-          await new Promise((r) => setTimeout(r, 240));
+          await new Promise((r) => setTimeout(r, 290));
         }
         if (event.type === 'CAPTURE_SUCCESS') {
           setBallAnim('success');
           setStatus('포획 성공!');
-          await new Promise((r) => setTimeout(r, 420));
+          await new Promise((r) => setTimeout(r, 520));
         }
         if (event.type === 'CAPTURE_FAIL') {
           setBallAnim('fail');
           setStatus('탈출!');
-          await new Promise((r) => setTimeout(r, 320));
+          await new Promise((r) => setTimeout(r, 360));
         }
       }
       if (seq === seqRef.current) setLocked(false);
@@ -96,7 +96,8 @@ export const EncounterScene = ({ encounter, events, inventory, onStart, onAdvanc
         <div className="actions grid2">
           {BALL_SPECS.map((ball) => (
             <button key={ball.key} className={`game-btn ${ball.trailClass}`} disabled={inventory.balls[ball.key] <= 0 || !canThrow} onClick={() => onThrow(ball.key)}>
-              {ball.label} ({inventory.balls[ball.key]})
+              <div>{ball.label}</div>
+              <small>보정 +{Math.round(ball.bonusRate * 100)}% · 보유 {inventory.balls[ball.key]}개</small>
             </button>
           ))}
         </div>
@@ -110,9 +111,15 @@ export const EncounterScene = ({ encounter, events, inventory, onStart, onAdvanc
 
       {encounter.phase === 'breakout' && (
         <div className="actions">
-          <button className="game-btn" disabled={locked} onClick={onAdvance}>다시 던지기</button>
-          <button className="game-btn" disabled={locked} onClick={onAdvance}>볼 바꾸기</button>
+          <button className="game-btn" disabled={locked} onClick={onAdvance}>다시 던지기 선택</button>
+          <button className="game-btn" disabled={locked} onClick={onAdvance}>볼 바꾸기 선택</button>
           <button className="game-btn" disabled={locked} onClick={onNext}>다음 포켓몬 만나기(무료)</button>
+        </div>
+      )}
+
+      {encounter.rollContext && (
+        <div className="capture-chance">
+          포획률 {Math.round(encounter.rollContext.finalChance * 100)}% (기본 {Math.round(encounter.rollContext.baseChance * 100)}% + 볼 {Math.round(encounter.rollContext.ballBonus * 100)}% + 재시도 {Math.round(encounter.rollContext.retryBonus * 100)}%)
         </div>
       )}
 
