@@ -77,43 +77,55 @@ export const BattleScene = memo(({ battle, events, inventory, onStart, onAdvance
   return (
     <section className="battle-screen">
       <div className={`battle-stage-modern battle-bg-battle ${motion.camera}`}>
-        <div className="battle-parallax battle-parallax-far" />
-        <div className="battle-parallax battle-parallax-near" />
-        <div className="battle-platform enemy" />
-        <div className="battle-platform player" />
+        <div className="battle-layer battle-layer-platform">
+          <div className="battle-parallax battle-parallax-far" />
+          <div className="battle-parallax battle-parallax-near" />
+          <div className="battle-platform enemy" />
+          <div className="battle-platform player" />
+        </div>
 
-        <div className={`battle-sprite-wrap enemy ${motion.target} ${enemy.fainted ? 'motion-faint' : 'motion-entry-enemy'}`}>
+        <div className="battle-layer battle-layer-shadow">
           <div className="battle-shadow enemy" />
-          <img src={enemySpecies.sprites.front} alt={enemy.name} className="battle-sprite front motion-idle" />
-        </div>
-
-        <div className={`battle-sprite-wrap player ${motion.attacker} ${player.fainted ? 'motion-faint' : 'motion-entry-player'}`}>
           <div className="battle-shadow player" />
-          <img src={playerSpecies.sprites.back} alt={player.name} className="battle-sprite back motion-idle" />
         </div>
 
-        <div className="battle-hud-modern enemy pokemon-hud-box">
-          <div className="hud-topline"><strong>{enemy.name}</strong><span>Lv.{levelFromStats(enemy.maxHp)}</span></div>
-          <div className="hp-track"><div className="hp-fill" style={{ width: `${enemyHpDisplay}%` }} /></div>
+        <div className="battle-layer battle-layer-sprite">
+          <div className={`battle-sprite-wrap enemy ${motion.target} ${enemy.fainted ? 'motion-faint' : 'motion-entry-enemy'} ${battle.phase === 'battle_intro' ? 'battle-intro-enemy' : ''}`}>
+            <img src={enemySpecies.sprites.front} alt={enemy.name} className="battle-sprite front motion-idle" />
+          </div>
+
+          <div className={`battle-sprite-wrap player ${motion.attacker} ${player.fainted ? 'motion-faint' : 'motion-entry-player'} ${battle.phase === 'battle_intro' ? 'battle-intro-player' : ''}`}>
+            <img src={playerSpecies.sprites.back} alt={player.name} className="battle-sprite back motion-idle" />
+          </div>
         </div>
 
-        <div className="battle-hud-modern player pokemon-hud-box">
-          <div className="hud-topline"><strong>{player.name}</strong><span>Lv.{levelFromStats(player.maxHp)}</span></div>
-          <div className="hp-track"><div className="hp-fill" style={{ width: `${playerHpDisplay}%` }} /></div>
-          <small className="hud-hp-readout">HP {player.hp}/{player.maxHp}</small>
-          <div className="xp-track"><div className="xp-fill" style={{ width: `${xpPercent(player.hp, player.maxHp)}%` }} /></div>
+        <div className="battle-layer battle-layer-hud">
+          <div className="battle-hud-modern enemy pokemon-hud-box">
+            <div className="hud-topline"><strong>{enemy.name}</strong><span>Lv.{levelFromStats(enemy.maxHp)}</span></div>
+            <div className="hud-hp-row"><span className="hud-hp-label">HP</span><div className="hp-track"><div className="hp-fill" style={{ width: `${enemyHpDisplay}%` }} /></div></div>
+          </div>
+
+          <div className="battle-hud-modern player pokemon-hud-box">
+            <div className="hud-topline"><strong>{player.name}</strong><span>Lv.{levelFromStats(player.maxHp)}</span></div>
+            <div className="hud-hp-row"><span className="hud-hp-label">HP</span><div className="hp-track"><div className="hp-fill" style={{ width: `${playerHpDisplay}%` }} /></div></div>
+            <small className="hud-hp-readout">{player.hp}/{player.maxHp}</small>
+            <div className="xp-track"><div className="xp-fill" style={{ width: `${xpPercent(player.hp, player.maxHp)}%` }} /></div>
+          </div>
         </div>
 
         <div className={`fx-layer battle-layer-fx ${motion.projectile} ${motion.impact}`} />
 
-        <div className="battle-dialog battle-dialog-text">{message}</div>
+        <div className="battle-dialog battle-dialog-text encounter-typewriter">{message}</div>
 
         {(battle.phase === 'battle_intro' || battle.phase === 'turn_start' || battle.phase === 'turn_end' || battle.phase === 'status_tick') && (
-          <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" disabled={!canInput} onClick={onAdvance}>다음</button></div>
+          <div className="battle-layer battle-layer-command">
+            <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" disabled={!canInput} onClick={onAdvance}>다음</button></div>
+          </div>
         )}
 
         {(showCommand || showFight || showBag || showPokemon) && (
-          <div className="battle-ui-lower">
+          <div className="battle-layer battle-layer-command">
+            <div className="battle-ui-lower">
             {showCommand && (
               <div className="battle-menu-grid command-grid">
                 <button className="menu-btn menu-btn-command" disabled={!canInput} onClick={() => { setMenuTab('fight'); onAdvance(); }}>FIGHT</button>
@@ -157,6 +169,7 @@ export const BattleScene = memo(({ battle, events, inventory, onStart, onAdvance
                 {battle.phase === 'choose_action' && <button className="menu-btn back" onClick={() => setMenuTab('command')}>뒤로</button>}
               </div>
             )}
+            </div>
           </div>
         )}
       </div>

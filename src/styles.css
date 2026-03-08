@@ -380,43 +380,68 @@ body { min-height: 100vh; }
 .battle-parallax-far { background: radial-gradient(circle at 72% 18%, rgba(255,255,255,.45), transparent 26%), radial-gradient(circle at 24% 28%, rgba(255,255,255,.18), transparent 20%); }
 .battle-parallax-near { background: linear-gradient(180deg, transparent 56%, rgba(23, 41, 30, 0.45)); }
 
+.battle-layer { position: absolute; inset: 0; pointer-events: none; }
+.battle-layer-platform { z-index: 1; }
+.battle-layer-shadow { z-index: 2; }
+.battle-layer-sprite { z-index: 3; }
+.battle-layer-hud { z-index: 4; }
+.battle-layer-command { z-index: 6; pointer-events: auto; }
+
 .battle-platform.enemy { width: clamp(340px, 32vw, 520px); height: clamp(110px, 12vw, 170px); right: 12%; top: 40%; }
 .battle-platform.player { width: clamp(380px, 37vw, 600px); height: clamp(130px, 14vw, 190px); left: 4%; bottom: 34%; }
 
 .battle-sprite-wrap.enemy { right: 15%; top: 21%; }
 .battle-sprite-wrap.player { left: 7%; bottom: 30%; }
-.battle-sprite.front { width: clamp(230px, 22vw, 330px); height: clamp(230px, 22vw, 330px); }
-.battle-sprite.back { width: clamp(290px, 26vw, 390px); height: clamp(290px, 26vw, 390px); }
+.battle-sprite.front { width: clamp(285px, 28vw, 410px); height: clamp(285px, 28vw, 410px); }
+.battle-sprite.back { width: clamp(360px, 34vw, 510px); height: clamp(360px, 34vw, 510px); }
+.battle-intro-enemy { animation: introSlideEnemy .62s cubic-bezier(.12,.86,.2,1); }
+.battle-intro-player { animation: introSlidePlayer .58s cubic-bezier(.14,.82,.2,1); }
+@keyframes introSlideEnemy { from { transform: translateX(260px) translateY(-12px) scale(.84); opacity: 0; } to { transform: translateX(0) translateY(0) scale(1); opacity: 1; } }
+@keyframes introSlidePlayer { from { transform: translateX(-220px) translateY(24px) scale(.86); opacity: 0; } to { transform: translateX(0) translateY(0) scale(1); opacity: 1; } }
 .battle-shadow {
   position: absolute;
   border-radius: 50%;
   background: radial-gradient(ellipse at center, rgba(7, 10, 19, 0.66), rgba(7, 10, 19, 0.05) 74%);
-  z-index: -1;
+  z-index: 0;
 }
-.battle-shadow.enemy { width: 220px; height: 64px; left: 50%; bottom: 12px; transform: translateX(-50%); }
-.battle-shadow.player { width: 260px; height: 76px; left: 50%; bottom: 16px; transform: translateX(-50%); }
+.battle-shadow.enemy { width: clamp(260px, 24vw, 360px); height: clamp(68px, 7vw, 96px); right: 17%; top: 49%; transform: translateX(50%); }
+.battle-shadow.player { width: clamp(300px, 28vw, 410px); height: clamp(84px, 8vw, 120px); left: 13%; bottom: 32%; }
 
-.battle-hud-modern { min-width: clamp(320px, 34vw, 430px); border-width: 3px; border-radius: 10px 20px 10px 20px; }
+.battle-hud-modern {
+  min-width: clamp(320px, 36vw, 520px);
+  border-width: 3px;
+  border-radius: 6px;
+  border-color: #243359;
+  background: linear-gradient(180deg, #f9fcff 0%, #e8f0ff 100%);
+  padding: 8px 12px 9px;
+}
 .battle-hud-modern.enemy { top: 7%; right: 4%; }
 .battle-hud-modern.player { left: 4%; bottom: 23%; }
-.pokemon-hud-box { box-shadow: 0 10px 0 rgba(40, 65, 120, 0.35), 0 18px 30px rgba(9, 18, 40, 0.35); }
-.hud-topline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 25px; }
-.hud-topline span { font-size: 18px; font-weight: 800; }
-.hud-hp-readout { display: block; text-align: right; font-size: 14px; letter-spacing: .02em; color: #2e4168; }
-.hp-track { height: 14px; border: 2px solid #243b71; background: #131d33; margin: 8px 0 6px; }
+.pokemon-hud-box { box-shadow: 0 5px 0 rgba(28, 51, 105, 0.28), 0 14px 26px rgba(9, 18, 40, 0.32); outline: 2px solid rgba(248, 252, 255, 0.8); outline-offset: -5px; }
+.hud-topline { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; font-size: clamp(21px, 1.7vw, 28px); line-height: 1.1; }
+.hud-topline strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-topline span { font-size: clamp(16px, 1.25vw, 21px); font-weight: 900; }
+.hud-hp-row { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; margin-top: 6px; }
+.hud-hp-label { font-size: 13px; font-weight: 900; letter-spacing: .09em; color: #1e2f58; }
+.hud-hp-readout { display: block; text-align: right; font-size: 14px; font-weight: 800; letter-spacing: .03em; color: #1d2d58; margin-top: 5px; }
+.hp-track { height: 12px; border: 2px solid #203563; background: #111a31; margin: 0; }
 .xp-track { height: 8px; border: 1px solid #255287; background: #8aa8ca; }
+.hp-fill {
+  background: linear-gradient(90deg, #4fca65 0%, #57d56d 50%, #f6cb4f 75%, #ed7a61 100%);
+}
 
 .battle-dialog {
   left: 22px;
   right: 22px;
   bottom: 164px;
   min-height: 112px;
-  border-radius: 8px;
-  border: 4px solid #f8fbff;
-  box-shadow: inset 0 0 0 3px #1d2d5c, 0 8px 24px rgba(6, 9, 24, 0.45);
-  background: linear-gradient(180deg, rgba(23, 37, 69, 0.96), rgba(8, 15, 32, 0.96));
+  border-radius: 10px;
+  border: 5px solid #f8fbff;
+  box-shadow: inset 0 0 0 3px #1d2d5c, inset 0 0 0 6px rgba(248, 252, 255, 0.3), 0 10px 26px rgba(6, 9, 24, 0.48);
+  background: linear-gradient(180deg, rgba(19, 30, 58, 0.98), rgba(8, 14, 30, 0.98));
 }
-.battle-dialog-text { font-size: clamp(22px, 2vw, 30px); font-weight: 800; letter-spacing: .02em; }
+.battle-dialog-text { font-size: clamp(19px, 1.5vw, 24px); font-weight: 700; letter-spacing: .01em; }
+.battle-dialog.encounter-typewriter { white-space: nowrap; }
 
 .battle-ui-lower { left: 22px; right: 22px; bottom: 22px; min-height: 124px; }
 .battle-menu-grid { gap: 12px; }
