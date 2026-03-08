@@ -1,16 +1,26 @@
 import { POKEMON_DATA } from '../../data/pokemonData';
 import type { BallType, CaptureEncounter, EngineEvent } from '../../types/game';
-import { weightedPick } from '../shared/rng';
+import { randomFloat, randomInt, weightedPick } from '../shared/rng';
 import { runCaptureRoll } from './captureResolver';
 
 export const createEncounter = (): CaptureEncounter => {
   const pokemon = weightedPick(POKEMON_DATA, (item) => item.spawnWeight);
+  const shiny = randomFloat() < 0.03;
+  const mythical = randomFloat() < 0.06;
+  const rare = !mythical && (pokemon.rarity === 'legendary' || randomFloat() < 0.18);
+  const rarity = mythical ? 'mythical' : rare ? 'rare' : 'normal';
+  const level = randomInt(28) + (rarity === 'mythical' ? 58 : rarity === 'rare' ? 38 : 12);
+  const hpRatio = Math.max(0.08, Math.min(1, (randomInt(70) + 20) / 100));
   return {
     pokemon,
+    level,
+    rarity,
+    shiny,
+    hpRatio,
     phase: 'encounter_intro',
     selectedBall: 'poke',
     shakes: 0,
-    resultText: `${pokemon.name} 등장!`,
+    resultText: `${shiny ? '✨ ' : ''}${pokemon.name} Lv.${level} 등장!`,
     retries: 0,
   };
 };
@@ -37,7 +47,7 @@ export const throwBall = (
   const shakeEvents: EngineEvent[] = Array.from({ length: rolled.shakes }, (_, index) => ({
     type: 'BALL_SHAKE',
     text: `${index + 1}회 흔들림`,
-    payload: { count: index + 1, ball: ballType },
+    payload: { count: index + 1, ball: ballType, timing: 180 + randomInt(240) },
   }));
 
   return {
@@ -49,8 +59,10 @@ export const throwBall = (
       { type: 'TURN_LOCKED' },
       { type: 'BALL_THROWN', payload: { ball: ballType } },
       { type: 'BALL_ABSORB', payload: { ball: ballType } },
+      { type: 'EFFECT_MESSAGE', text: '숨죽이는 순간...' },
       ...shakeEvents,
       { type: rolled.phase === 'caught' ? 'CAPTURE_SUCCESS' : 'CAPTURE_FAIL' },
+      ...(rolled.phase === 'caught' ? [] : [{ type: 'EFFECT_MESSAGE' as const, text: '볼이 터지며 강하게 탈출했다!' }]),
     ],
   };
 };

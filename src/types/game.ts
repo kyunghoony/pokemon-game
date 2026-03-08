@@ -5,6 +5,7 @@ export type MoveCategory = 'beam' | 'projectile' | 'slash' | 'status' | 'healing
 export type BattlePhase =
   | 'battle_intro'
   | 'turn_start'
+  | 'status_tick'
   | 'choose_action'
   | 'choose_move'
   | 'choose_switch'
@@ -71,6 +72,8 @@ export interface BattlePokemon {
   moves: Array<{ moveId: string; pp: number; maxPp: number }>;
   isGigantamax: boolean;
   fainted: boolean;
+  status: 'none' | 'burn' | 'paralysis' | 'sleep';
+  sleepTurns: number;
 }
 
 export interface BallSpec {
@@ -98,6 +101,10 @@ export interface Inventory {
 
 export interface CaptureEncounter {
   pokemon: PokemonSpecies;
+  level: number;
+  rarity: 'normal' | 'rare' | 'mythical';
+  shiny: boolean;
+  hpRatio: number;
   phase: CapturePhase;
   selectedBall: BallType;
   shakes: number;
@@ -122,6 +129,7 @@ export interface BattleState {
   turn: number;
   winner: 'player' | 'enemy' | null;
   pendingMessage: string;
+  actionHint: string;
 }
 
 export interface GameState {
