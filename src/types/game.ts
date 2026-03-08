@@ -135,12 +135,18 @@ export interface GameState {
 
 export interface EngineEvent {
   type:
+    | 'TURN_LOCKED'
+    | 'MOVE_PREPARE'
     | 'MOVE_USED'
     | 'PROJECTILE_FIRED'
     | 'HIT_CONFIRMED'
     | 'DAMAGE_APPLIED'
+    | 'HP_ANIM_START'
+    | 'HP_ANIM_END'
+    | 'EFFECT_MESSAGE'
     | 'POKEMON_FAINTED'
     | 'BALL_THROWN'
+    | 'BALL_ABSORB'
     | 'BALL_SHAKE'
     | 'CAPTURE_SUCCESS'
     | 'CAPTURE_FAIL'

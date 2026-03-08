@@ -39,14 +39,21 @@ export const createBattle = (): BattleState => {
 
 const firstAlive = (team: BattlePokemon[]) => team.findIndex((p) => !p.fainted);
 
-export const chooseSwitch = (battle: BattleState, toIndex: number): BattleState => ({
-  ...battle,
-  playerActive: toIndex,
-  phase: 'turn_end',
-  pendingMessage: `${battle.playerTeam[toIndex].name}(으)로 교체!`,
-});
+export const chooseSwitch = (battle: BattleState, toIndex: number): BattleState => {
+  const canSwitch = toIndex >= 0 && toIndex < battle.playerTeam.length && !battle.playerTeam[toIndex].fainted;
+  if (!canSwitch || toIndex === battle.playerActive) return battle;
+
+  return {
+    ...battle,
+    playerActive: toIndex,
+    phase: 'choose_action',
+    pendingMessage: `${battle.playerTeam[toIndex].name}(으)로 교체! 행동을 선택하세요.`,
+  };
+};
 
 export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { next: BattleState; events: EngineEvent[] } => {
+  if (battle.phase !== 'choose_move') return { next: battle, events: [] };
+
   const player = battle.playerTeam[battle.playerActive];
   const enemy = battle.enemyTeam[battle.enemyActive];
   const aiMoveIndex = selectAiMoveIndex(enemy);
@@ -56,13 +63,14 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
   ].sort((a, b) => b.priority - a.priority || b.speed - a.speed);
 
   let working: BattleState = { ...battle, playerTeam: [...battle.playerTeam], enemyTeam: [...battle.enemyTeam], phase: 'action_resolution' };
-  const events: EngineEvent[] = [];
+  const events: EngineEvent[] = [{ type: 'TURN_LOCKED' }];
 
   for (const action of queue) {
     const attacker = action.side === 'player' ? working.playerTeam[working.playerActive] : working.enemyTeam[working.enemyActive];
     const defender = action.side === 'player' ? working.enemyTeam[working.enemyActive] : working.playerTeam[working.playerActive];
     if (attacker.fainted || defender.fainted) continue;
 
+    events.push({ type: 'MOVE_PREPARE', payload: { side: action.side } });
     const resolved = resolveMove({ attacker, defender, moveIndex: action.moveIndex });
     events.push(...resolved.events, { type: 'SOUND_HINT', payload: { cue: 'hit' } });
 
@@ -92,7 +100,7 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
 
   if (working.enemyTeam[working.enemyActive].fainted) {
     working.enemyActive = nextEnemy;
-    events.push({ type: 'MOVE_USED', text: `상대는 ${working.enemyTeam[nextEnemy].name}를 내보냈다!` });
+    events.push({ type: 'EFFECT_MESSAGE', text: `상대는 ${working.enemyTeam[nextEnemy].name}를 내보냈다!` });
   }
 
   if (working.playerTeam[working.playerActive].fainted) {

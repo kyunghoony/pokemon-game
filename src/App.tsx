@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useGameController } from './hooks/useGameController';
 import { BattleScene } from './ui/battle/BattleScene';
 import { CollectionPanel } from './ui/collection/CollectionPanel';
@@ -8,13 +7,6 @@ import { LogPanel } from './ui/shared/LogPanel';
 
 const App = () => {
   const { state, purchase, stats, battle, encounter } = useGameController();
-
-  useEffect(() => {
-    if (battle.battle?.phase === 'turn_end') {
-      const timer = setTimeout(() => battle.advancePhase(), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [battle]);
 
   return (
     <div className="app-shell">

@@ -19,14 +19,19 @@ export const resolveMove = ({ attacker, defender, moveIndex }: ResolveArgs): { n
     ),
   };
 
-  const events: EngineEvent[] = [{ type: 'MOVE_USED', text: `${attacker.name}의 ${move.name}!`, payload: { category: move.category } }];
+  const events: EngineEvent[] = [{ type: 'MOVE_USED', text: `${attacker.name}의 ${move.name}!`, payload: { category: move.category, moveType: move.type } }];
 
   if (move.power === 0 && move.healRatio) {
     const heal = Math.floor(attacker.maxHp * move.healRatio);
     return {
       nextAttacker: { ...nextAttacker, hp: Math.min(attacker.maxHp, attacker.hp + heal) },
       nextDefender: defender,
-      events: [...events, { type: 'DAMAGE_APPLIED', text: `${attacker.name} 체력 +${heal}` }],
+      events: [
+        ...events,
+        { type: 'PROJECTILE_FIRED', payload: { category: move.category, moveType: move.type } },
+        { type: 'EFFECT_MESSAGE', text: `${attacker.name}의 체력이 회복됐다!` },
+        { type: 'DAMAGE_APPLIED', text: `${attacker.name} 체력 +${heal}` },
+      ],
     };
   }
 
@@ -45,7 +50,9 @@ export const resolveMove = ({ attacker, defender, moveIndex }: ResolveArgs): { n
     ...events,
     { type: 'PROJECTILE_FIRED', payload: { category: move.category, moveType: move.type } },
     { type: 'HIT_CONFIRMED' },
+    { type: 'HP_ANIM_START', payload: { from: defender.hp, to: hp } },
     { type: 'DAMAGE_APPLIED', text: result, payload: { damage } },
+    { type: 'HP_ANIM_END', payload: { hp } },
   ];
 
   if (nextDefender.fainted) {
@@ -58,7 +65,7 @@ export const resolveMove = ({ attacker, defender, moveIndex }: ResolveArgs): { n
     return {
       nextAttacker: { ...nextAttacker, hp: recoilHp, fainted: recoilHp <= 0 },
       nextDefender,
-      events: [...resolved, { type: 'DAMAGE_APPLIED', text: `발버둥 반동 ${recoil} 데미지` }],
+      events: [...resolved, { type: 'EFFECT_MESSAGE', text: `발버둥 반동 ${recoil} 데미지` }],
     };
   }
 
