@@ -1,10 +1,16 @@
 import type { PokemonSpecies } from '../types/game';
 
+const showdownSprite = (name: string) => ({
+  front: `https://play.pokemonshowdown.com/sprites/gen5/${name}.png`,
+  back: `https://play.pokemonshowdown.com/sprites/gen5-back/${name}.png`,
+});
+
 export const POKEMON_DATA: PokemonSpecies[] = [
   {
     id: 'charizard',
     dex: 6,
     name: '리자몽',
+    sprites: showdownSprite('charizard'),
     region: '관동',
     types: ['불꽃', '비행'],
     catchRate: 0.28,
@@ -19,6 +25,7 @@ export const POKEMON_DATA: PokemonSpecies[] = [
     id: 'blastoise',
     dex: 9,
     name: '거북왕',
+    sprites: showdownSprite('blastoise'),
     region: '관동',
     types: ['물'],
     catchRate: 0.3,
@@ -33,6 +40,7 @@ export const POKEMON_DATA: PokemonSpecies[] = [
     id: 'venusaur',
     dex: 3,
     name: '이상해꽃',
+    sprites: showdownSprite('venusaur'),
     region: '관동',
     types: ['풀', '독'],
     catchRate: 0.32,
@@ -47,6 +55,7 @@ export const POKEMON_DATA: PokemonSpecies[] = [
     id: 'pikachu',
     dex: 25,
     name: '피카츄',
+    sprites: showdownSprite('pikachu'),
     region: '관동',
     types: ['전기'],
     catchRate: 0.42,
@@ -61,6 +70,7 @@ export const POKEMON_DATA: PokemonSpecies[] = [
     id: 'mewtwo',
     dex: 150,
     name: '뮤츠',
+    sprites: showdownSprite('mewtwo'),
     region: '관동',
     types: ['에스퍼'],
     catchRate: 0.12,
