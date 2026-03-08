@@ -3,9 +3,21 @@
 body { margin: 0; background: radial-gradient(circle at top, #1d2940, #0d1118); }
 .app-shell { padding: 16px; max-width: 1280px; margin: 0 auto; }
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.game-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-.main-scenes { display: grid; gap: 12px; }
+.scene-frame { min-height: calc(100vh - 120px); display: grid; place-items: center; }
 .scene-card, .panel { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 12px; }
+.scene-focus { width: min(960px, 100%); min-height: 68vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.scene-stack { width: min(980px, 100%); display: grid; gap: 12px; }
+.scene-actions { display: flex; justify-content: flex-end; }
+
+.transition-fade { animation: sceneFade .28s ease; }
+.transition-slide-left { animation: sceneSlideLeft .34s ease; }
+.transition-slide-right { animation: sceneSlideRight .34s ease; }
+.transition-zoom { animation: sceneZoom .3s ease; }
+
+@keyframes sceneFade { from { opacity: .2; } to { opacity: 1; } }
+@keyframes sceneSlideLeft { from { opacity: .2; transform: translateX(32px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes sceneSlideRight { from { opacity: .2; transform: translateX(-32px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes sceneZoom { from { opacity: .2; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
 
 .battle-stage, .encounter-stage { position: relative; height: 260px; overflow: hidden; border-radius: 12px; margin-bottom: 10px; }
 .battle-stage.zoom { animation: camZoom .16s ease-out; }
@@ -103,7 +115,5 @@ body { margin: 0; background: radial-gradient(circle at top, #1d2940, #0d1118); 
 .move-panel small { opacity: .8; }
 .mini-log { margin-top: 8px; font-size: 12px; opacity: .85; min-height: 42px; }
 
-.side-panels { display: grid; gap: 12px; align-content: start; }
 .logs ul { margin: 0; padding-left: 20px; max-height: 210px; overflow: auto; }
-@media (max-width: 960px) { .game-layout { grid-template-columns: 1fr; } .side-panels { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 640px) { .side-panels { grid-template-columns: 1fr; } .actions.grid2 { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .actions.grid2 { grid-template-columns: 1fr; } }
