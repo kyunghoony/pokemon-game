@@ -9,87 +9,111 @@ body { margin: 0; background: radial-gradient(circle at top, #1d2940, #0d1118); 
 .scene-stack { width: min(980px, 100%); display: grid; gap: 12px; }
 .scene-actions { display: flex; justify-content: flex-end; }
 
-.transition-fade { animation: sceneFade .28s ease; }
-.transition-slide-left { animation: sceneSlideLeft .34s ease; }
-.transition-slide-right { animation: sceneSlideRight .34s ease; }
-.transition-zoom { animation: sceneZoom .3s ease; }
+.transition-fade { animation: sceneFade .32s ease; }
+.transition-warp-in { animation: warpIn .45s cubic-bezier(.14,.78,.14,1); }
+.transition-lock-zoom { animation: lockZoom .42s cubic-bezier(.16,.83,.21,1); }
+.transition-battle-stage { animation: battleStageIn .5s cubic-bezier(.1,.9,.2,1); }
+.transition-battle-out { animation: battleOut .45s ease; }
+.transition-panel-open { animation: panelOpen .36s ease-out; }
+.transition-return { animation: returnWorld .35s ease-out; }
 
 @keyframes sceneFade { from { opacity: .2; } to { opacity: 1; } }
-@keyframes sceneSlideLeft { from { opacity: .2; transform: translateX(32px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes sceneSlideRight { from { opacity: .2; transform: translateX(-32px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes sceneZoom { from { opacity: .2; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes warpIn { from { opacity: 0; transform: scale(1.08) translateZ(0); filter: blur(3px);} to { opacity: 1; transform: scale(1); filter: blur(0);} }
+@keyframes lockZoom { from { transform: scale(.92) translateY(16px);} to { transform: scale(1);} }
+@keyframes battleStageIn { 0% { opacity: 0; transform: translateY(28px) scale(1.05);} 100% { opacity: 1; transform: translateY(0) scale(1);} }
+@keyframes battleOut { from { opacity: 1; } to { opacity: .2; transform: scale(.96);} }
+@keyframes panelOpen { from { opacity: 0; transform: translateY(18px) scale(.97);} to { opacity: 1; transform: translateY(0) scale(1);} }
+@keyframes returnWorld { from { opacity: .2; transform: translateX(-24px);} to { opacity: 1; transform: translateX(0);} }
 
-.battle-stage, .encounter-stage { position: relative; height: 260px; overflow: hidden; border-radius: 12px; margin-bottom: 10px; }
-.battle-stage.zoom { animation: camZoom .16s ease-out; }
-.battle-stage.shake { animation: camShake .2s linear; }
-@keyframes camShake { 25% { transform: translateX(-6px);} 50% { transform: translateX(6px);} 75% { transform: translateY(-3px);} }
-@keyframes camZoom { from { transform: scale(1); } to { transform: scale(1.03); } }
+.battle-stage, .encounter-stage { position: relative; height: 280px; overflow: hidden; border-radius: 12px; margin-bottom: 10px; }
 .battle-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #65adf4, #79c868); }
 .encounter-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #2f3465, #4f3f72); }
 .battle-layer-bg,.capture-layer-bg{z-index:0}.battle-layer-pokemon,.capture-layer-pokemon{z-index:2}.battle-layer-fx,.capture-layer-fx{z-index:3}.battle-layer-ui,.capture-layer-ui{z-index:4;position:absolute;inset:0;pointer-events:none}
 
-.poke-card { position: absolute; z-index: 2; width: 190px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.18); transition: transform .25s ease, opacity .25s ease; }
+.battle-stage-cinematic::after { content:''; position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at 60% 40%, transparent, rgba(0,0,0,.2)); }
+.cam-focus { animation: camFocus .2s ease-out; }
+.cam-hit-pause { animation: camPause .1s steps(1,end); }
+.cam-shake { animation: camShake .22s linear; }
+.cam-turn-focus { animation: camTurn .35s ease-out; }
+@keyframes camPause { 50% { transform: scale(1.02);} }
+@keyframes camShake { 25% { transform: translateX(-7px);} 50% { transform: translateX(7px);} 75% { transform: translateY(-4px);} }
+@keyframes camFocus { from { transform: scale(1); } to { transform: scale(1.035); } }
+@keyframes camTurn { from { transform: translateX(-10px);} to { transform: translateX(0);} }
+
+.poke-card { position: absolute; z-index: 2; width: 190px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.18); }
 .poke-card.enemy { top: 26px; right: 22px; }
 .poke-card.player { bottom: 24px; left: 20px; }
-.poke-card.prep { transform: translateX(16px) scale(1.03); }
-.poke-card.hit { animation: hitflash .3s linear 2; }
-.poke-card.stagger { animation: hitflash .23s linear 2; }
-.poke-card.faint { opacity: .45; transform: translateY(16px) scale(.95); }
-@keyframes hitflash { 35% { filter: brightness(2.5); transform: translateX(-11px); } 80% { transform: translateX(8px); } }
+.motion-idle { animation: idleBob 2.4s ease-in-out infinite; }
+.motion-entry-enemy { animation: entryEnemy .5s ease-out; }
+.motion-entry-player { animation: entryPlayer .5s ease-out; }
+.motion-entry-wild { animation: entryWild .45s ease-out; }
+.motion-attack-prep-player { animation: attackPrepPlayer .2s ease-out; }
+.motion-attack-prep-enemy { animation: attackPrepEnemy .2s ease-out; }
+.motion-hit-recoil { animation: hitRecoil .24s ease-out; }
+.motion-faint { animation: faintDrop .58s ease-in forwards; opacity:.4; }
+@keyframes idleBob { 0%,100% { transform: translateY(0) scale(1);} 50% { transform: translateY(-6px) scale(1.02);} }
+@keyframes entryEnemy { from { transform: translate(28px, -20px) scale(.92); opacity:0; } }
+@keyframes entryPlayer { from { transform: translate(-24px, 20px) scale(.92); opacity:0; } }
+@keyframes entryWild { from { transform: translate(-50%, -45%) scale(.8); opacity:0;} to {transform: translate(-50%, -50%) scale(1); opacity:1;} }
+@keyframes attackPrepPlayer { to { transform: translateX(18px) scale(1.04);} }
+@keyframes attackPrepEnemy { to { transform: translateX(-18px) scale(1.04);} }
+@keyframes hitRecoil { 35% { filter: brightness(2.7); transform: translateX(-12px) scale(1.03); } 80% { transform: translateX(8px);} }
+@keyframes faintDrop { to { transform: translateY(24px) scale(.85); filter: saturate(0);} }
 
 .hp-track { width: 100%; height: 10px; background: #342f46; border-radius: 999px; overflow: hidden; margin: 6px 0 4px; }
 .hp-fill { height: 100%; background: linear-gradient(90deg, #5bd66f, #e2c44a, #ed6b6b); transition: width .58s cubic-bezier(.18,.79,.27,1); }
-.hp-fill.damage { filter: brightness(1.55) saturate(1.4); }
 .status-chip{font-size:11px;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.18)}
+.pulse-chip { animation: chipPulse 1.4s ease-in-out infinite; }
+@keyframes chipPulse { 50% { box-shadow: 0 0 0 4px rgba(255,255,255,.08);} }
 
 .fx-layer { position: absolute; z-index: 1; inset: 0; pointer-events: none; opacity: 0; }
-.fx-beam { opacity: 1; background: linear-gradient(100deg, transparent 28%, rgba(255,90,90,.1) 38%, rgba(255,90,90,.92) 52%, transparent 70%); animation: beam .38s ease-out; }
-.fx-projectile { opacity: 1; }
-.fx-projectile::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #f6f0a8; left: 22%; bottom: 20%; animation: projectile .46s cubic-bezier(.17,.76,.15,1) forwards; }
-.fx-slash { opacity: 1; background: repeating-linear-gradient(125deg, transparent, transparent 42%, rgba(255,255,255,.72) 45%, transparent 48%); animation: slash .3s ease-out; }
-.fx-heal { opacity: 1; background: radial-gradient(circle at 24% 78%, rgba(98,222,153,.6), transparent 40%); animation: heal .45s ease-out; }
-.fx-gmax { opacity: 1; background: radial-gradient(circle at center, rgba(176,74,255,.5), rgba(77,19,140,.28), transparent); animation: gmax .7s ease-out; }
-.fx-type-fire { filter: hue-rotate(0deg) saturate(1.15); }
-.fx-type-water { filter: hue-rotate(185deg) saturate(1.2); }
-.fx-type-elec { filter: hue-rotate(52deg) saturate(1.2); }
-.fx-type-grass { filter: hue-rotate(112deg) saturate(1.2); }
-.fx-type-psy { filter: hue-rotate(255deg) saturate(1.3); }
+.motion-projectile-projectile { opacity: 1; }
+.motion-projectile-projectile::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #f6f0a8; left: 20%; bottom: 24%; animation: projectile .42s cubic-bezier(.17,.76,.15,1) forwards; }
+.motion-projectile-beam { opacity: 1; background: linear-gradient(100deg, transparent 28%, rgba(255,90,90,.1) 38%, rgba(255,90,90,.92) 52%, transparent 70%); animation: beam .34s ease-out; }
+.motion-projectile-slash { opacity: 1; background: repeating-linear-gradient(125deg, transparent, transparent 42%, rgba(255,255,255,.72) 45%, transparent 48%); animation: slash .26s ease-out; }
+.motion-projectile-gigantamax { opacity: 1; background: radial-gradient(circle at center, rgba(176,74,255,.55), rgba(77,19,140,.28), transparent); animation: gmax .6s ease-out; }
+.motion-hit-flash { opacity: 1; background: radial-gradient(circle at 70% 30%, rgba(255,255,255,.8), transparent 40%); animation: impactFlash .2s ease-out; }
 @keyframes beam { from { transform: translateX(-15%); } to { transform: translateX(12%); opacity: 0; } }
-@keyframes projectile { to { transform: translate(420px, -130px) scale(1.2); opacity: .1; } }
+@keyframes projectile { to { transform: translate(440px, -136px) scale(1.3); opacity: .1; } }
 @keyframes slash { 50% { filter: brightness(2); } to { opacity: 0; } }
-@keyframes heal { 50% { filter: saturate(2); } to { opacity: 0; } }
-@keyframes gmax { 40% { transform: scale(1.06); } to { opacity: 0; } }
+@keyframes gmax { 40% { transform: scale(1.08); } to { opacity: 0; } }
+@keyframes impactFlash { to { opacity: 0; } }
 
 .damage-popup { position: absolute; left: 50%; transform: translateX(-50%); z-index: 3; background: #ff5a5a; padding: 6px 10px; border-radius: 8px; font-weight: 700; }
+.motion-damage-pop { animation: damagePop .55s ease-out; }
+@keyframes damagePop { from { transform: translate(-50%, 8px) scale(.8); opacity:0; } to { transform: translate(-50%, -14px) scale(1); opacity:1; } }
 .move-hover-card{grid-column:1/-1;font-size:12px;padding:6px 8px;border:1px solid rgba(255,255,255,.24);border-radius:8px;background:rgba(10,15,24,.75)}
-.effect-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); font-size: 12px; background: rgba(0,0,0,.44); border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 4px 10px; z-index: 3; }
 .status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lock-badge { font-size: 12px; color: #f8d57f; }
 .phase-pill { font-size: 11px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 2px 8px; background: rgba(255,255,255,.08); }
 
 .wild-mon { position: absolute; left: 50%; top: 43%; transform: translate(-50%, -50%); padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.16); }
-.wild-mon.slide-in{animation:slideIn .45s ease-out}
 .rarity-indicator{position:absolute;left:10px;top:10px;font-size:12px;background:rgba(0,0,0,.5);padding:4px 8px;border-radius:9px}
-@keyframes slideIn{from{transform:translate(-30%,-50%);opacity:0}to{transform:translate(-50%,-50%);opacity:1}}
-.wild-mon.breakout { animation: breakout .32s linear 2; }
+.special-aura-shiny { box-shadow: 0 0 24px rgba(120,239,255,.8); }
+.special-aura-rare { box-shadow: 0 0 18px rgba(132,190,255,.7); }
+.special-aura-gmax { box-shadow: 0 0 24px rgba(214,106,255,.9); }
+.wild-mon.motion-breakout { animation: breakout .32s linear 2; }
 @keyframes breakout { 50% { transform: translate(-50%, -50%) translateY(-9px); filter: brightness(1.8);} }
 
-.capture-ball { position: absolute; width: 22px; height: 22px; border-radius: 50%; left: 14%; bottom: 18%; border: 2px solid #f8f8f8; background: #fff; opacity: 0; }
+.capture-ball { position: absolute; width: 22px; height: 22px; border-radius: 50%; left: 14%; bottom: 18%; border: 2px solid #f8f8f8; background: #fff; opacity: .95; }
 .capture-ball.ball-poke { box-shadow: 0 0 0 2px rgba(255,255,255,.2); }
 .capture-ball.ball-great { background: #3f63ff; }
 .capture-ball.ball-ultra { background: #111; border-color: #f5cf5b; }
 .capture-ball.ball-master { background: #9f47f5; border-color: #f07df8; box-shadow: 0 0 16px rgba(214,106,255,.9); }
-.capture-ball.throw { opacity: 1; animation: throwBall .5s ease-out forwards; }
-.capture-ball.absorb { opacity: 1; left: 50%; top: 42%; animation: absorb .36s ease-out; }
-.capture-ball.shake { opacity: 1; left: 50%; top: 50%; animation: shake .26s linear 1; }
-.capture-ball.success { opacity: 1; left: 50%; top: 50%; animation: success .48s ease-out; }
-.capture-ball.fail { opacity: 1; left: 50%; top: 50%; animation: fail .32s ease-out; }
-.capture-ball.burst{box-shadow:0 0 22px rgba(255,135,135,.95)}
-@keyframes throwBall { to { transform: translate(320px, -128px); left: 14%; bottom: 18%; } }
-@keyframes absorb { to { transform: scale(1.45); opacity: .7; } }
+.motion-ball-throw { animation: throwBall .56s ease-out forwards; }
+.motion-capture-absorb { animation: absorb .36s ease-out; }
+.motion-capture-glow { animation: captureGlow .4s ease-out; }
+.motion-capture-shake-1, .motion-capture-shake-2, .motion-capture-shake-3 { left: 50%; top: 50%; animation: shake .26s linear 1; }
+.motion-success-burst { animation: success .5s ease-out; }
+.motion-breakout-burst { animation: fail .34s ease-out; }
+.motion-aim-charge { animation: aimCharge .24s ease-out; }
+@keyframes throwBall { from { transform: translate(0,0);} to { transform: translate(340px, -144px);} }
+@keyframes absorb { to { transform: scale(1.45); opacity: .35; } }
+@keyframes captureGlow { 50% { filter: brightness(1.8);} }
 @keyframes shake { 25% { transform: translateX(-9px); } 75% { transform: translateX(9px); } }
-@keyframes success { 50% { transform: scale(1.3); } to { box-shadow: 0 0 20px #6df29d; } }
+@keyframes success { 50% { transform: scale(1.3); } to { text-shadow: 0 0 16px #6df29d; } }
 @keyframes fail { 50% { transform: translateY(-14px); } }
+@keyframes aimCharge { from { letter-spacing: 0; } to { letter-spacing: .04em; } }
 .shake-indicator { position: absolute; right: 12px; top: 12px; font-size: 13px; background: rgba(0,0,0,.4); padding: 4px 8px; border-radius: 8px; }
 .capture-ux{font-size:12px;opacity:.92;margin-bottom:4px}
 .encounter-stage.flash-rare::after,.encounter-stage.flash-mythical::after,.encounter-stage.flash-normal::after{content:'';position:absolute;inset:0;pointer-events:none;animation:introFlash .45s ease-out}
@@ -97,15 +121,23 @@ body { margin: 0; background: radial-gradient(circle at top, #1d2940, #0d1118); 
 .encounter-stage.flash-rare::after{background:rgba(132,190,255,.28)}
 .encounter-stage.flash-mythical::after{background:rgba(244,112,255,.34)}
 @keyframes introFlash{from{opacity:1}to{opacity:0}}
-.capture-chance { margin-top: 8px; font-size: 12px; opacity: .9; }
 
-.game-btn { background: #2d3f66; color: #fff; border: 1px solid #4f6aa5; border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.world-hub { position: relative; overflow: hidden; }
+.world-aura { position: absolute; inset: 0; background: radial-gradient(circle at 20% 24%, rgba(103,210,255,.18), transparent 45%), radial-gradient(circle at 80% 78%, rgba(171,132,255,.2), transparent 45%); animation: auraDrift 5s linear infinite alternate; pointer-events: none; }
+.hub-card { backdrop-filter: blur(2px); }
+@keyframes auraDrift { from { transform: translateX(-8px);} to { transform: translateX(8px);} }
+
+.game-btn { background: #2d3f66; color: #fff; border: 1px solid #4f6aa5; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: transform .14s ease, filter .14s ease, box-shadow .14s ease; }
 .game-btn.primary { background: linear-gradient(90deg, #f3569a, #7f7bff); }
-.game-btn:disabled { opacity: .4; cursor: not-allowed; }
+.game-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 8px 16px rgba(0,0,0,.2); }
+.game-btn:active { transform: translateY(0) scale(.96); }
+.game-btn:disabled { opacity: .4; cursor: not-allowed; filter: saturate(.4); }
 .game-btn.is-ready { border-color: #5b7acf; }
-.game-btn.is-selected { border-color: #f9df77; box-shadow: 0 0 0 1px rgba(249,223,119,.45); }
+.game-btn.is-selected { border-color: #f9df77; box-shadow: 0 0 0 1px rgba(249,223,119,.45), 0 0 16px rgba(249,223,119,.2); }
 .game-btn.is-pp-empty { border-color: #a05858; color: #ffc6c6; }
 .game-btn.is-disabled { opacity: .45; }
+.pulse-select { animation: selectPulse 1.2s ease-in-out infinite; }
+@keyframes selectPulse { 50% { box-shadow: 0 0 0 5px rgba(255,255,255,.08);} }
 .trail-basic { border-color: #e9e9e9; }
 .trail-great { border-color: #6c8dff; box-shadow: inset 0 0 0 1px rgba(108,141,255,.3); }
 .trail-ultra { border-color: #f3cc63; box-shadow: inset 0 0 0 1px rgba(243,204,99,.3); }
@@ -114,6 +146,10 @@ body { margin: 0; background: radial-gradient(circle at top, #1d2940, #0d1118); 
 .actions.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .move-panel small { opacity: .8; }
 .mini-log { margin-top: 8px; font-size: 12px; opacity: .85; min-height: 42px; }
+.motion-scene-enter { animation: sceneEnter .35s ease-out; }
+.motion-reward-pop { animation: rewardPop .34s ease-out; }
+@keyframes sceneEnter { from { transform: translateY(8px); opacity:0;} to { transform: translateY(0); opacity:1;} }
+@keyframes rewardPop { from { transform: translateY(8px) scale(.9);} to { transform: translateY(0) scale(1);} }
 
 .logs ul { margin: 0; padding-left: 20px; max-height: 210px; overflow: auto; }
 @media (max-width: 640px) { .actions.grid2 { grid-template-columns: 1fr; } }
