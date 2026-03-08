@@ -21,16 +21,14 @@ export const useEncounterController = (
 
   const throwBall = (ball: BallType) => {
     setEncounter((prev) => {
-      if (!prev || inventory.balls[ball] <= 0) return prev;
+      if (!prev || prev.phase !== 'ball_select' || inventory.balls[ball] <= 0) return prev;
       onConsumeBall(ball);
       const result = runThrowBall(prev, ball, inventory);
       setEvents(result.events);
       onLog(`${ball} 볼 투척`);
+      onLog(result.next.resultText);
       if (result.next.phase === 'caught') {
         onCaught(result.next.pokemon.id);
-        onLog(result.next.resultText);
-      } else {
-        onLog(result.next.resultText);
       }
       return result.next;
     });

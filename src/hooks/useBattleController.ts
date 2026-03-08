@@ -18,7 +18,7 @@ export const useBattleController = (onLog: (message: string) => void) => {
 
   const chooseMove = (moveIndex: number) => {
     setBattle((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.phase !== 'choose_move') return prev;
       const resolved = resolveTurn(prev, moveIndex);
       setEvents(resolved.events);
       resolved.events.forEach((event) => event.text && onLog(event.text));
@@ -27,7 +27,10 @@ export const useBattleController = (onLog: (message: string) => void) => {
   };
 
   const doSwitch = (index: number) => {
-    setBattle((prev) => (prev ? chooseSwitch(prev, index) : prev));
+    setBattle((prev) => {
+      if (!prev || (prev.phase !== 'forced_switch' && prev.phase !== 'choose_action')) return prev;
+      return chooseSwitch(prev, index);
+    });
   };
 
   const activePlayer = useMemo(() => (battle ? battle.playerTeam[battle.playerActive] : null), [battle]);
