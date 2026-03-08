@@ -39,22 +39,40 @@ export const createBattle = (): BattleState => {
 
 const firstAlive = (team: BattlePokemon[]) => team.findIndex((p) => !p.fainted);
 
-export const chooseSwitch = (battle: BattleState, toIndex: number): BattleState => {
+export const chooseSwitch = (battle: BattleState, toIndex: number): { next: BattleState; events: EngineEvent[] } => {
+  if (battle.phase !== 'forced_switch' && battle.phase !== 'choose_action') {
+    return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: `지금은 교체할 수 없습니다. phase=${battle.phase}` }] };
+  }
+
   const canSwitch = toIndex >= 0 && toIndex < battle.playerTeam.length && !battle.playerTeam[toIndex].fainted;
-  if (!canSwitch || toIndex === battle.playerActive) return battle;
+  if (!canSwitch) {
+    return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: '교체 가능한 포켓몬이 아닙니다.' }] };
+  }
+  if (toIndex === battle.playerActive) {
+    return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: '이미 전투 중인 포켓몬입니다.' }] };
+  }
 
   return {
-    ...battle,
-    playerActive: toIndex,
-    phase: 'choose_action',
-    pendingMessage: `${battle.playerTeam[toIndex].name}(으)로 교체! 행동을 선택하세요.`,
+    next: {
+      ...battle,
+      playerActive: toIndex,
+      phase: 'choose_action',
+      pendingMessage: `${battle.playerTeam[toIndex].name}(으)로 교체! 행동을 선택하세요.`,
+    },
+    events: [{ type: 'EFFECT_MESSAGE', text: `${battle.playerTeam[toIndex].name}(으)로 교체했다!` }],
   };
 };
 
 export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { next: BattleState; events: EngineEvent[] } => {
-  if (battle.phase !== 'choose_move') return { next: battle, events: [] };
+  if (battle.phase !== 'choose_move') {
+    return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: `잘못된 기술 입력을 무시했습니다. phase=${battle.phase}` }] };
+  }
 
   const player = battle.playerTeam[battle.playerActive];
+  if (!player.moves[playerMoveIndex]) {
+    return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: '존재하지 않는 기술 슬롯입니다.' }] };
+  }
+
   const enemy = battle.enemyTeam[battle.enemyActive];
   const aiMoveIndex = selectAiMoveIndex(enemy);
   const queue = [
@@ -120,9 +138,9 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
   };
 };
 
-export const continueBattleFlow = (battle: BattleState): BattleState => {
-  if (battle.phase === 'battle_intro') return { ...battle, phase: 'turn_start', pendingMessage: '전투 준비!' };
-  if (battle.phase === 'turn_start' || battle.phase === 'turn_end') return { ...battle, phase: 'choose_action', pendingMessage: '행동을 선택하세요.' };
-  if (battle.phase === 'choose_action') return { ...battle, phase: 'choose_move', pendingMessage: '기술을 선택하세요.' };
-  return battle;
+export const continueBattleFlow = (battle: BattleState): { next: BattleState; events: EngineEvent[] } => {
+  if (battle.phase === 'battle_intro') return { next: { ...battle, phase: 'turn_start', pendingMessage: '전투 준비!' }, events: [] };
+  if (battle.phase === 'turn_start' || battle.phase === 'turn_end') return { next: { ...battle, phase: 'choose_action', pendingMessage: '행동을 선택하세요.' }, events: [] };
+  if (battle.phase === 'choose_action') return { next: { ...battle, phase: 'choose_move', pendingMessage: '기술을 선택하세요.' }, events: [] };
+  return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: `현재 phase(${battle.phase})에서는 다음 진행을 누를 수 없습니다.` }] };
 };

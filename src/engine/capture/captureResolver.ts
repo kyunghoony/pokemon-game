@@ -14,16 +14,16 @@ export const runCaptureRoll = (
   const charmBonus = inventory.charmLevel * 0.015;
   const retryBonus = Math.min(0.2, encounter.retries * 0.04);
   const ballBonus = ball.bonusRate;
-  const finalChance = ballType === 'master' ? 1 : Math.min(0.97, baseChance + charmBonus + retryBonus + ballBonus);
+  const finalChance = ballType === 'master' ? 1 : Math.min(0.97, Math.max(0.01, baseChance + charmBonus + retryBonus + ballBonus));
   const roll = randomFloat();
-  const success = roll <= finalChance;
+  const success = ballType === 'master' ? true : roll < finalChance;
 
   return {
     ...encounter,
     phase: success ? 'caught' : 'breakout',
     resultText: success ? `${encounter.pokemon.name} 포획 성공!` : `${encounter.pokemon.name}이(가) 볼에서 탈출했다!`,
     rollContext: { baseChance, charmBonus, retryBonus, ballBonus, finalChance, roll },
-    shakes: success ? 3 : Math.max(1, Math.floor((roll / Math.max(finalChance, 0.01)) * 3)),
+    shakes: success ? 3 : Math.min(3, Math.max(1, Math.ceil((roll / Math.max(finalChance, 0.01)) * 2.2))),
     retries: encounter.retries + 1,
   };
 };

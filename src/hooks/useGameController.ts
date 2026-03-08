@@ -11,7 +11,22 @@ export const useGameController = () => {
 
   const log = (message: string) => setState((prev) => appendLog(prev, message));
 
-  const battle = useBattleController(log);
+  const battle = useBattleController(log, () => {
+    setState((prev) =>
+      appendLog(
+        {
+          ...prev,
+          inventory: {
+            ...prev.inventory,
+            rainbowCandy: prev.inventory.rainbowCandy + 180,
+            typeCandy: { ...prev.inventory.typeCandy, 일반: (prev.inventory.typeCandy.일반 ?? 0) + 40 },
+          },
+        },
+        '배틀 승리 보상: 무지개사탕 +180, 일반사탕 +40',
+      ),
+    );
+  });
+
   const encounter = useEncounterController(
     state.inventory,
     (ball: BallType) =>
@@ -19,7 +34,16 @@ export const useGameController = () => {
         ...prev,
         inventory: { ...prev.inventory, balls: { ...prev.inventory.balls, [ball]: Math.max(0, prev.inventory.balls[ball] - 1) } },
       })),
-    (pokemonId: string) => setState((prev) => ({ ...prev, collection: [...prev.collection, pokemonId], inventory: { ...prev.inventory, rainbowCandy: prev.inventory.rainbowCandy + 80 } })),
+    (pokemonId: string) =>
+      setState((prev) => ({
+        ...prev,
+        collection: [...prev.collection, pokemonId],
+        inventory: {
+          ...prev.inventory,
+          rainbowCandy: prev.inventory.rainbowCandy + 80,
+          typeCandy: { ...prev.inventory.typeCandy, 일반: (prev.inventory.typeCandy.일반 ?? 0) + 20 },
+        },
+      })),
     log,
   );
 

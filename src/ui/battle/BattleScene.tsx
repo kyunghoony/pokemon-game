@@ -11,25 +11,36 @@ interface Props {
   onSwitch: (index: number) => void;
 }
 
-const categoryFxClass = (category?: MoveCategory) => {
+const categoryFxClass = (category?: MoveCategory, moveType?: string) => {
   if (!category) return '';
-  if (category === 'beam') return 'fx-beam';
-  if (category === 'projectile') return 'fx-projectile';
-  if (category === 'slash' || category === 'struggle') return 'fx-slash';
-  if (category === 'status' || category === 'healing') return 'fx-heal';
-  if (category === 'gigantamax') return 'fx-gmax';
-  return '';
+  const typeClass = moveType === '불꽃' ? 'fx-type-fire' : moveType === '물' ? 'fx-type-water' : moveType === '전기' ? 'fx-type-elec' : moveType === '풀' ? 'fx-type-grass' : moveType === '에스퍼' ? 'fx-type-psy' : '';
+  if (category === 'beam') return `fx-beam ${typeClass}`;
+  if (category === 'projectile') return `fx-projectile ${typeClass}`;
+  if (category === 'slash' || category === 'struggle') return `fx-slash ${typeClass}`;
+  if (category === 'status' || category === 'healing') return `fx-heal ${typeClass}`;
+  if (category === 'gigantamax') return `fx-gmax ${typeClass}`;
+  return typeClass;
 };
 
 const hpPercent = (hp: number, max: number) => Math.max(0, Math.min(100, Math.round((hp / Math.max(1, max)) * 100)));
+
+const phaseLabel = (phase: BattleState['phase']) => {
+  if (phase === 'choose_action' || phase === 'choose_move') return '행동 선택 중';
+  if (phase === 'action_resolution') return '애니메이션 진행 중';
+  if (phase === 'forced_switch') return '강제 교체 필요';
+  if (phase === 'battle_end') return '승패 확정';
+  return '턴 진행';
+};
 
 export const BattleScene = ({ battle, events, onStart, onAdvance, onMove, onSwitch }: Props) => {
   const [playerHpDisplay, setPlayerHpDisplay] = useState(100);
   const [enemyHpDisplay, setEnemyHpDisplay] = useState(100);
   const [fxClass, setFxClass] = useState('');
   const [flashSide, setFlashSide] = useState<'player' | 'enemy' | null>(null);
-  const [popup, setPopup] = useState('');
+  const [popups, setPopups] = useState<Array<{ id: number; text: string }>>([]);
   const [locked, setLocked] = useState(false);
+  const [selectedMove, setSelectedMove] = useState<number | null>(null);
+  const [effectHint, setEffectHint] = useState('');
   const seqRef = useRef(0);
 
   const latestLogs = useMemo(() => events.filter((e) => e.text).slice(-3).map((e) => e.text as string), [events]);
@@ -47,28 +58,36 @@ export const BattleScene = ({ battle, events, onStart, onAdvance, onMove, onSwit
     const seq = ++seqRef.current;
     const run = async () => {
       setLocked(true);
+      setSelectedMove(null);
       for (const event of events) {
         if (seq !== seqRef.current) return;
         if (event.type === 'MOVE_PREPARE') {
           setFlashSide((event.payload?.side as 'player' | 'enemy') ?? null);
-          await new Promise((r) => setTimeout(r, 220));
+          await new Promise((r) => setTimeout(r, 180));
+        }
+        if (event.type === 'MOVE_USED') {
+          setFxClass(categoryFxClass(event.payload?.category as MoveCategory, event.payload?.moveType as string));
+          await new Promise((r) => setTimeout(r, 130));
         }
         if (event.type === 'PROJECTILE_FIRED') {
-          setFxClass(categoryFxClass(event.payload?.category as MoveCategory));
-          await new Promise((r) => setTimeout(r, 280));
+          await new Promise((r) => setTimeout(r, 260));
         }
         if (event.type === 'HIT_CONFIRMED') {
           setFlashSide('enemy');
-          await new Promise((r) => setTimeout(r, 200));
+          await new Promise((r) => setTimeout(r, 170));
         }
         if (event.type === 'DAMAGE_APPLIED' && event.text) {
-          setPopup(event.text);
-          await new Promise((r) => setTimeout(r, 320));
-          setPopup('');
+          const id = Date.now() + Math.floor(Math.random() * 1000);
+          setPopups((prev) => [...prev.slice(-1), { id, text: event.text ?? '' }]);
+          if (event.text.includes('굉장함')) setEffectHint('효과가 굉장하다!');
+          if (event.text.includes('별로')) setEffectHint('효과가 별로다...');
+          if (event.text.includes('통하지')) setEffectHint('효과가 없다!');
+          await new Promise((r) => setTimeout(r, 340));
+          setPopups((prev) => prev.filter((item) => item.id !== id));
         }
         if (event.type === 'POKEMON_FAINTED') {
           setFlashSide('enemy');
-          await new Promise((r) => setTimeout(r, 320));
+          await new Promise((r) => setTimeout(r, 420));
         }
       }
       if (seq === seqRef.current) {
@@ -111,11 +130,13 @@ export const BattleScene = ({ battle, events, onStart, onAdvance, onMove, onSwit
           <small>{player.hp}/{player.maxHp}</small>
         </div>
 
-        {popup && <div className="damage-popup">{popup}</div>}
+        {popups.map((popup, idx) => <div key={popup.id} className="damage-popup" style={{ top: `${24 + idx * 14}%` }}>{popup.text}</div>)}
+        {effectHint && <div className="effect-hint">{effectHint}</div>}
       </div>
 
       <div className="status-row">
         <p>{battle.pendingMessage}</p>
+        <span className="phase-pill">{phaseLabel(battle.phase)}</span>
         {locked && <span className="lock-badge">연출 재생 중...</span>}
       </div>
 
@@ -143,8 +164,19 @@ export const BattleScene = ({ battle, events, onStart, onAdvance, onMove, onSwit
         <div className="actions grid2 move-panel">
           {player.moves.map((slot, index) => {
             const move = MOVE_INDEX[slot.moveId];
+            const ppEmpty = slot.pp <= 0;
+            const disabled = !canAction;
+            const stateClass = disabled ? 'is-disabled' : ppEmpty ? 'is-pp-empty' : selectedMove === index ? 'is-selected' : 'is-ready';
             return (
-              <button key={slot.moveId} className="game-btn" disabled={!canAction} onClick={() => onMove(index)}>
+              <button
+                key={`${slot.moveId}-${index}`}
+                className={`game-btn ${stateClass}`}
+                disabled={disabled}
+                onClick={() => {
+                  setSelectedMove(index);
+                  onMove(index);
+                }}
+              >
                 <div>{move?.name ?? slot.moveId}</div>
                 <small>{move?.category} · PP {slot.pp}/{slot.maxPp}</small>
               </button>
