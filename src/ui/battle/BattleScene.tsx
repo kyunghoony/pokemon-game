@@ -56,8 +56,8 @@ export const BattleScene = memo(({ battle, events, inventory, onStart, onAdvance
     return (
       <section className="battle-screen">
         <div className="battle-stage-modern battle-bg-grass">
-          <div className="battle-dialog">포켓몬 배틀 준비 중...</div>
-          <div className="battle-ui-lower single"><button className="game-btn primary" onClick={onStart}>배틀 시작</button></div>
+          <div className="battle-dialog battle-dialog-text">포켓몬 배틀 준비 중...</div>
+          <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" onClick={onStart}>배틀 시작</button></div>
         </div>
       </section>
     );
@@ -77,45 +77,49 @@ export const BattleScene = memo(({ battle, events, inventory, onStart, onAdvance
   return (
     <section className="battle-screen">
       <div className={`battle-stage-modern battle-bg-battle ${motion.camera}`}>
+        <div className="battle-parallax battle-parallax-far" />
+        <div className="battle-parallax battle-parallax-near" />
         <div className="battle-platform enemy" />
         <div className="battle-platform player" />
 
         <div className={`battle-sprite-wrap enemy ${motion.target} ${enemy.fainted ? 'motion-faint' : 'motion-entry-enemy'}`}>
+          <div className="battle-shadow enemy" />
           <img src={enemySpecies.sprites.front} alt={enemy.name} className="battle-sprite front motion-idle" />
         </div>
 
         <div className={`battle-sprite-wrap player ${motion.attacker} ${player.fainted ? 'motion-faint' : 'motion-entry-player'}`}>
+          <div className="battle-shadow player" />
           <img src={playerSpecies.sprites.back} alt={player.name} className="battle-sprite back motion-idle" />
         </div>
 
-        <div className="battle-hud-modern enemy">
-          <strong>{enemy.name} ♂ Lv.{levelFromStats(enemy.maxHp)}</strong>
+        <div className="battle-hud-modern enemy pokemon-hud-box">
+          <div className="hud-topline"><strong>{enemy.name}</strong><span>Lv.{levelFromStats(enemy.maxHp)}</span></div>
           <div className="hp-track"><div className="hp-fill" style={{ width: `${enemyHpDisplay}%` }} /></div>
         </div>
 
-        <div className="battle-hud-modern player">
-          <strong>{player.name} Lv.{levelFromStats(player.maxHp)}</strong>
+        <div className="battle-hud-modern player pokemon-hud-box">
+          <div className="hud-topline"><strong>{player.name}</strong><span>Lv.{levelFromStats(player.maxHp)}</span></div>
           <div className="hp-track"><div className="hp-fill" style={{ width: `${playerHpDisplay}%` }} /></div>
-          <small>HP {player.hp}/{player.maxHp}</small>
+          <small className="hud-hp-readout">HP {player.hp}/{player.maxHp}</small>
           <div className="xp-track"><div className="xp-fill" style={{ width: `${xpPercent(player.hp, player.maxHp)}%` }} /></div>
         </div>
 
         <div className={`fx-layer battle-layer-fx ${motion.projectile} ${motion.impact}`} />
 
-        <div className="battle-dialog">{message}</div>
+        <div className="battle-dialog battle-dialog-text">{message}</div>
 
         {(battle.phase === 'battle_intro' || battle.phase === 'turn_start' || battle.phase === 'turn_end' || battle.phase === 'status_tick') && (
-          <div className="battle-ui-lower single"><button className="menu-btn" disabled={!canInput} onClick={onAdvance}>다음</button></div>
+          <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" disabled={!canInput} onClick={onAdvance}>다음</button></div>
         )}
 
         {(showCommand || showFight || showBag || showPokemon) && (
           <div className="battle-ui-lower">
             {showCommand && (
-              <div className="battle-menu-grid">
-                <button className="menu-btn" disabled={!canInput} onClick={() => { setMenuTab('fight'); onAdvance(); }}>FIGHT</button>
-                <button className="menu-btn" disabled={!canInput} onClick={() => setMenuTab('bag')}>BAG</button>
-                <button className="menu-btn" disabled={!canInput} onClick={() => setMenuTab('pokemon')}>POKéMON</button>
-                <button className="menu-btn" disabled>RUN</button>
+              <div className="battle-menu-grid command-grid">
+                <button className="menu-btn menu-btn-command" disabled={!canInput} onClick={() => { setMenuTab('fight'); onAdvance(); }}>FIGHT</button>
+                <button className="menu-btn menu-btn-command" disabled={!canInput} onClick={() => setMenuTab('bag')}>BAG</button>
+                <button className="menu-btn menu-btn-command" disabled={!canInput} onClick={() => setMenuTab('pokemon')}>POKéMON</button>
+                <button className="menu-btn menu-btn-command" disabled>RUN</button>
               </div>
             )}
 

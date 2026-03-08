@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useGameController } from './hooks/useGameController';
 import { BattleScene } from './ui/battle/BattleScene';
 import { CollectionPanel } from './ui/collection/CollectionPanel';
@@ -8,7 +8,7 @@ import { ShopPanel } from './ui/shop/ShopPanel';
 import { useSceneTransition, type Scene } from './ui/animation/useSceneTransition';
 
 const App = () => {
-  const { state, purchase, stats, battle, encounter } = useGameController();
+  const { state, purchase, battle, encounter } = useGameController();
   const [currentScene, setCurrentScene] = useState<Scene>('title');
   const [previousScene, setPreviousScene] = useState<Scene>('title');
 
@@ -19,35 +19,20 @@ const App = () => {
 
   const transition = useSceneTransition(previousScene, currentScene);
 
-  const sceneTitle = useMemo(() => {
-    if (currentScene === 'title') return 'TitleScene';
-    if (currentScene === 'world') return 'WorldScene';
-    if (currentScene === 'encounter') return 'EncounterScene';
-    if (currentScene === 'battle') return 'BattleScene';
-    if (currentScene === 'capture') return 'CaptureScene';
-    if (currentScene === 'shop') return 'ShopScene';
-    return 'CollectionScene';
-  }, [currentScene]);
-
   return (
     <div className="app-shell game-root">
-      <header className="topbar motion-scene-enter">
-        <h1>포켓몬 Scene UI</h1>
-        <div className="meta">현재: {sceneTitle} · 포획 {stats.capturedCount} / 고유 {stats.uniqueCount}</div>
-      </header>
-
       <main className={`scene-frame ${transition}`} key={currentScene}>
         {currentScene === 'title' && (
           <section className="scene-card scene-focus title-scene motion-scene-enter">
-            <h2>TitleScene</h2>
-            <p>포켓몬 월드로 입장해 탐험, 배틀, 포획을 진행하세요.</p>
+            <h2>포켓몬 배틀 필드</h2>
+            <p>야생 포켓몬을 만나고, 배틀과 포획을 통해 팀을 완성하세요.</p>
             <button className="game-btn primary pulse-select" onClick={() => navigate('world')}>게임 시작</button>
           </section>
         )}
 
         {currentScene === 'world' && (
           <section className="scene-card scene-focus world-scene world-hub motion-scene-enter">
-            <h2>WorldScene</h2>
+            <h2>월드 맵</h2>
             <div className="world-aura" />
             <div className="actions grid2">
               <button className="game-btn primary hub-card pulse-select" onClick={() => { encounter.startEncounter(); navigate('encounter'); }}>탐험 시작</button>
@@ -57,7 +42,7 @@ const App = () => {
             </div>
             <div className="status-row">
               <span className="phase-pill motion-reward-pop">추천: 탐험 시작</span>
-              <span className="phase-pill motion-reward-pop">보상 누적: {state.inventory.rainbowCandy}</span>
+              <span className="phase-pill motion-reward-pop">레인보우캔디: {state.inventory.rainbowCandy}</span>
             </div>
           </section>
         )}

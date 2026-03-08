@@ -22,8 +22,8 @@ export const CaptureScene = memo(({ encounter, events, inventory, onAdvance, onT
     return (
       <section className="battle-screen">
         <div className="battle-stage-modern battle-bg-cave">
-          <div className="battle-dialog">포획할 포켓몬이 없다.</div>
-          <div className="battle-ui-lower single"><button className="menu-btn" onClick={onFinish}>월드로 복귀</button></div>
+          <div className="battle-dialog battle-dialog-text">포획할 포켓몬이 없다.</div>
+          <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" onClick={onFinish}>월드로 복귀</button></div>
         </div>
       </section>
     );
@@ -31,24 +31,27 @@ export const CaptureScene = memo(({ encounter, events, inventory, onAdvance, onT
 
   return (
     <section className="battle-screen">
-      <div className="battle-stage-modern battle-bg-cave">
+      <div className="battle-stage-modern battle-bg-cave capture-scene">
+        <div className="battle-parallax battle-parallax-far" />
+        <div className="battle-parallax battle-parallax-near" />
         <div className="battle-platform enemy" />
         <div className={`battle-sprite-wrap enemy ${motion.pokemon} ${encounter.shiny ? 'special-aura-shiny' : ''}`}>
+          <div className="battle-shadow enemy" />
           <img src={encounter.pokemon.sprites.front} alt={encounter.pokemon.name} className="battle-sprite front motion-idle" />
         </div>
 
         <div className={`capture-ball capture-layer-ball ${selectedBall ? `ball-${selectedBall}` : ''} ${motion.ball}`} />
-        <div className={`capture-layer-fx ${motion.aura}`}><div className="shake-indicator">흔들림 {encounter.shakes}</div></div>
+        <div className={`capture-layer-fx capture-cinematic-fx ${motion.aura}`}><div className="shake-indicator">흔들림 {encounter.shakes}</div></div>
 
-        <div className="battle-hud-modern enemy">
-          <strong>{encounter.pokemon.name} Lv.{encounter.level}</strong>
+        <div className="battle-hud-modern enemy pokemon-hud-box">
+          <div className="hud-topline"><strong>{encounter.pokemon.name}</strong><span>Lv.{encounter.level}</span></div>
           <div className="hp-track"><div className="hp-fill" style={{ width: `${Math.round(encounter.hpRatio * 100)}%` }} /></div>
         </div>
 
-        <div className="battle-dialog">{dialog}</div>
+        <div className="battle-dialog battle-dialog-text">{dialog}</div>
 
         {(encounter.phase === 'encounter_intro' || encounter.phase === 'encounter_continue') && (
-          <div className="battle-ui-lower single"><button className="menu-btn" disabled={motion.locked} onClick={onAdvance}>계속</button></div>
+          <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" disabled={motion.locked} onClick={onAdvance}>계속</button></div>
         )}
 
         {encounter.phase === 'ball_select' && (
@@ -71,7 +74,7 @@ export const CaptureScene = memo(({ encounter, events, inventory, onAdvance, onT
           </div>
         )}
 
-        {encounter.phase === 'caught' && <div className="battle-ui-lower single"><button className="menu-btn" onClick={onFinish}>포획 완료</button></div>}
+        {encounter.phase === 'caught' && <div className="battle-ui-lower single"><button className="menu-btn menu-btn-major" onClick={onFinish}>포획 완료</button></div>}
         {encounter.phase === 'breakout' && <div className="battle-ui-lower"><div className="battle-menu-grid"><button className="menu-btn" onClick={onRetry}>다시 던진다</button><button className="menu-btn" onClick={onFinish}>포기한다</button></div></div>}
       </div>
     </section>
