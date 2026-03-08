@@ -1,7 +1,7 @@
 import { POKEMON_DATA } from '../../data/pokemonData';
 import type { BattlePokemon, BattleState, EngineEvent, PokemonSpecies } from '../../types/game';
-import { randomInt } from '../shared/rng';
-import { selectAiMoveIndex } from './ai';
+import { randomFloat, randomInt } from '../shared/rng';
+import { evaluateAiSwitch, selectAiMoveIndex } from './ai';
 import { resolveMove } from './battleResolver';
 
 const toBattlePokemon = (species: PokemonSpecies, suffix: string, isGigantamax = false): BattlePokemon => ({
@@ -16,6 +16,8 @@ const toBattlePokemon = (species: PokemonSpecies, suffix: string, isGigantamax =
   speed: species.speed,
   isGigantamax,
   fainted: false,
+  status: 'none',
+  sleepTurns: 0,
   moves: [...species.movePool, ...(isGigantamax && species.gigantamaxMoveId ? [species.gigantamaxMoveId] : [])]
     .slice(0, 4)
     .map((moveId) => ({ moveId, pp: moveId.includes('g-max') ? 3 : moveId.includes('blast') || moveId.includes('beam') ? 5 : 15, maxPp: moveId.includes('g-max') ? 3 : moveId.includes('blast') || moveId.includes('beam') ? 5 : 15 })),
@@ -34,6 +36,7 @@ export const createBattle = (): BattleState => {
     turn: 1,
     winner: null,
     pendingMessage: '야생 트레이너와 배틀 시작!',
+    actionHint: '개시',
   };
 };
 
@@ -74,19 +77,43 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
   }
 
   const enemy = battle.enemyTeam[battle.enemyActive];
-  const aiMoveIndex = selectAiMoveIndex(enemy);
+  const aiSwitchTo = evaluateAiSwitch(battle.enemyTeam, battle.enemyActive);
+  const aiMoveIndex = selectAiMoveIndex(enemy, player.types);
   const queue = [
-    { side: 'player' as const, speed: player.speed, priority: player.moves[playerMoveIndex]?.moveId === 'quick-attack' ? 1 : 0, moveIndex: playerMoveIndex },
-    { side: 'enemy' as const, speed: enemy.speed, priority: enemy.moves[aiMoveIndex]?.moveId === 'quick-attack' ? 1 : 0, moveIndex: aiMoveIndex },
+    { side: 'player' as const, speed: player.status === 'paralysis' ? Math.floor(player.speed * 0.65) : player.speed, priority: player.moves[playerMoveIndex]?.moveId === 'quick-attack' ? 1 : 0, moveIndex: playerMoveIndex },
+    { side: 'enemy' as const, speed: enemy.status === 'paralysis' ? Math.floor(enemy.speed * 0.65) : enemy.speed, priority: enemy.moves[aiMoveIndex]?.moveId === 'quick-attack' ? 1 : 0, moveIndex: aiMoveIndex },
   ].sort((a, b) => b.priority - a.priority || b.speed - a.speed);
 
   let working: BattleState = { ...battle, playerTeam: [...battle.playerTeam], enemyTeam: [...battle.enemyTeam], phase: 'action_resolution' };
   const events: EngineEvent[] = [{ type: 'TURN_LOCKED' }];
 
+  if (aiSwitchTo !== null) {
+    working.enemyActive = aiSwitchTo;
+    working.actionHint = '상대 교체';
+    events.push({ type: 'EFFECT_MESSAGE', text: `상대는 ${working.enemyTeam[aiSwitchTo].name}(으)로 교체했다!` });
+    return {
+      next: { ...working, phase: 'turn_end', turn: working.turn + 1, pendingMessage: '상대가 전열을 가다듬었다.' },
+      events,
+    };
+  }
+
   for (const action of queue) {
     const attacker = action.side === 'player' ? working.playerTeam[working.playerActive] : working.enemyTeam[working.enemyActive];
     const defender = action.side === 'player' ? working.enemyTeam[working.enemyActive] : working.playerTeam[working.playerActive];
     if (attacker.fainted || defender.fainted) continue;
+
+    if (attacker.status === 'sleep' && attacker.sleepTurns > 0) {
+      const nextAttacker = { ...attacker, sleepTurns: attacker.sleepTurns - 1 };
+      if (action.side === 'player') working.playerTeam[working.playerActive] = nextAttacker;
+      else working.enemyTeam[working.enemyActive] = nextAttacker;
+      events.push({ type: 'EFFECT_MESSAGE', text: `${attacker.name}는(은) 잠들어 있다!` });
+      continue;
+    }
+
+    if (attacker.status === 'paralysis' && randomFloat() < 0.25) {
+      events.push({ type: 'EFFECT_MESSAGE', text: `${attacker.name}는(은) 몸이 저려 움직일 수 없다!` });
+      continue;
+    }
 
     events.push({ type: 'MOVE_PREPARE', payload: { side: action.side } });
     const resolved = resolveMove({ attacker, defender, moveIndex: action.moveIndex });
@@ -107,11 +134,12 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
   if (nextEnemy < 0 || nextPlayer < 0) {
     return {
       next: {
-        ...working,
-        phase: 'battle_end',
-        winner: nextEnemy < 0 ? 'player' : 'enemy',
-        pendingMessage: nextEnemy < 0 ? '승리!' : '패배... ',
-      },
+      ...working,
+      phase: 'battle_end',
+      winner: nextEnemy < 0 ? 'player' : 'enemy',
+      pendingMessage: nextEnemy < 0 ? '승리!' : '패배... ',
+      actionHint: '종료',
+    },
       events,
     };
   }
@@ -124,6 +152,7 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
   if (working.playerTeam[working.playerActive].fainted) {
     working.phase = 'forced_switch';
     working.pendingMessage = '기절한 포켓몬을 교체하세요.';
+    working.actionHint = '강제 교체';
     return { next: working, events };
   }
 
@@ -133,14 +162,34 @@ export const resolveTurn = (battle: BattleState, playerMoveIndex: number): { nex
       phase: 'turn_end',
       turn: working.turn + 1,
       pendingMessage: `턴 ${working.turn} 종료`,
+      actionHint: '턴 종료',
     },
     events,
   };
 };
 
+const statusTick = (battle: BattleState): { next: BattleState; events: EngineEvent[] } => {
+  const events: EngineEvent[] = [];
+  const next = { ...battle, playerTeam: [...battle.playerTeam], enemyTeam: [...battle.enemyTeam] };
+  const applyBurn = (pokemon: BattlePokemon) => {
+    if (pokemon.status !== 'burn' || pokemon.fainted) return pokemon;
+    const dot = Math.max(1, Math.floor(pokemon.maxHp * 0.08));
+    const hp = Math.max(0, pokemon.hp - dot);
+    events.push({ type: 'DAMAGE_APPLIED', text: `${pokemon.name} 화상 데미지 ${dot}`, payload: { damage: dot, dot: true } });
+    return { ...pokemon, hp, fainted: hp <= 0 };
+  };
+  next.playerTeam[next.playerActive] = applyBurn(next.playerTeam[next.playerActive]);
+  next.enemyTeam[next.enemyActive] = applyBurn(next.enemyTeam[next.enemyActive]);
+  return { next, events };
+};
+
 export const continueBattleFlow = (battle: BattleState): { next: BattleState; events: EngineEvent[] } => {
   if (battle.phase === 'battle_intro') return { next: { ...battle, phase: 'turn_start', pendingMessage: '전투 준비!' }, events: [] };
-  if (battle.phase === 'turn_start' || battle.phase === 'turn_end') return { next: { ...battle, phase: 'choose_action', pendingMessage: '행동을 선택하세요.' }, events: [] };
+  if (battle.phase === 'turn_start' || battle.phase === 'turn_end') return { next: { ...battle, phase: 'status_tick', pendingMessage: '상태 효과 확인 중...', actionHint: 'status_tick' }, events: [] };
+  if (battle.phase === 'status_tick') {
+    const ticked = statusTick(battle);
+    return { next: { ...ticked.next, phase: 'choose_action', pendingMessage: '행동을 선택하세요.', actionHint: 'action_select' }, events: ticked.events };
+  }
   if (battle.phase === 'choose_action') return { next: { ...battle, phase: 'choose_move', pendingMessage: '기술을 선택하세요.' }, events: [] };
   return { next: battle, events: [{ type: 'EFFECT_MESSAGE', text: `현재 phase(${battle.phase})에서는 다음 진행을 누를 수 없습니다.` }] };
 };
