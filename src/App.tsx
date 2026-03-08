@@ -102,6 +102,7 @@ const App = () => {
             <BattleScene
               battle={battle.battle}
               events={battle.events}
+              inventory={state.inventory}
               onStart={battle.startBattle}
               onAdvance={battle.advancePhase}
               onMove={battle.chooseMove}

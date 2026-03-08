@@ -46,6 +46,10 @@ export interface PokemonSpecies {
   id: string;
   dex: number;
   name: string;
+  sprites: {
+    front: string;
+    back: string;
+  };
   region: Region;
   types: string[];
   catchRate: number;
