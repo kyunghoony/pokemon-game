@@ -1,13 +1,78 @@
-import type { Pokemon } from '../types/game';
+import type { PokemonSpecies } from '../types/game';
 
-/**
- * 기존 index.html의 대형 POKEMON_RAW_DATA를 이 파일로 이전하는 것을 전제로 한 시작점입니다.
- * 지금은 구조 예시를 위해 샘플 데이터만 넣어 두었습니다.
- */
-export const POKEMON_DATA: Pokemon[] = [
-  { id: 'bulbasaur', dex: 1, name: '이상해씨', region: '관동', types: ['풀', '독'], catchRate: 0.45, spawnWeight: 5 },
-  { id: 'charmander', dex: 4, name: '파이리', region: '관동', types: ['불꽃'], catchRate: 0.42, spawnWeight: 5 },
-  { id: 'squirtle', dex: 7, name: '꼬부기', region: '관동', types: ['물'], catchRate: 0.45, spawnWeight: 5 },
-  { id: 'pikachu', dex: 25, name: '피카츄', region: '관동', types: ['전기'], catchRate: 0.35, spawnWeight: 4 },
-  { id: 'mewtwo', dex: 150, name: '뮤츠', region: '관동', types: ['에스퍼'], catchRate: 0.12, spawnWeight: 1 },
+export const POKEMON_DATA: PokemonSpecies[] = [
+  {
+    id: 'charizard',
+    dex: 6,
+    name: '리자몽',
+    region: '관동',
+    types: ['불꽃', '비행'],
+    catchRate: 0.28,
+    spawnWeight: 4,
+    baseHp: 160,
+    attack: 84,
+    defense: 78,
+    speed: 100,
+    movePool: ['flamethrower', 'fire-blast', 'swords-dance', 'leaf-blade'],
+  },
+  {
+    id: 'blastoise',
+    dex: 9,
+    name: '거북왕',
+    region: '관동',
+    types: ['물'],
+    catchRate: 0.3,
+    spawnWeight: 4,
+    baseHp: 170,
+    attack: 83,
+    defense: 100,
+    speed: 78,
+    movePool: ['hydro-pump', 'water-pulse', 'recover', 'thunderbolt'],
+  },
+  {
+    id: 'venusaur',
+    dex: 3,
+    name: '이상해꽃',
+    region: '관동',
+    types: ['풀', '독'],
+    catchRate: 0.32,
+    spawnWeight: 4,
+    baseHp: 175,
+    attack: 82,
+    defense: 83,
+    speed: 80,
+    movePool: ['leaf-blade', 'solar-beam', 'recover', 'swords-dance'],
+  },
+  {
+    id: 'pikachu',
+    dex: 25,
+    name: '피카츄',
+    region: '관동',
+    types: ['전기'],
+    catchRate: 0.42,
+    spawnWeight: 6,
+    baseHp: 125,
+    attack: 55,
+    defense: 45,
+    speed: 110,
+    movePool: ['thunderbolt', 'thunder', 'quick-attack', 'recover'],
+  },
+  {
+    id: 'mewtwo',
+    dex: 150,
+    name: '뮤츠',
+    region: '관동',
+    types: ['에스퍼'],
+    catchRate: 0.12,
+    spawnWeight: 1,
+    baseHp: 195,
+    attack: 110,
+    defense: 90,
+    speed: 120,
+    movePool: ['thunderbolt', 'recover', 'fire-blast'],
+    gigantamaxMoveId: 'g-max-psybreak',
+    rarity: 'legendary',
+  },
 ];
+
+export const POKEMON_INDEX = Object.fromEntries(POKEMON_DATA.map((pokemon) => [pokemon.id, pokemon]));

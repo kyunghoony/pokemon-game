@@ -1,22 +1,41 @@
-import type { BallType, GameState } from '../types/game';
+import type { GameState } from '../types/game';
+
+export const SAVE_VERSION = 2;
+const STORAGE_KEY = 'pokemon-game-save';
 
 export const initialGameState = (): GameState => ({
-  coins: 200,
-  ballBag: { poke: 20, great: 3, ultra: 1, master: 0 },
+  version: SAVE_VERSION,
+  inventory: {
+    rainbowCandy: 3000,
+    balls: { poke: 20, great: 8, ultra: 4, master: 1 },
+    typeCandy: { 일반: 250 },
+    charmLevel: 0,
+  },
   collection: [],
-  currentEncounter: null,
-  logs: ['게임을 시작했습니다. 탐험 버튼을 눌러 포켓몬을 만나보세요!'],
+  battle: null,
+  capture: null,
+  logs: ['환영합니다. 배틀/포획 화면으로 게임을 시작하세요!'],
 });
 
 export const appendLog = (state: GameState, message: string): GameState => ({
   ...state,
-  logs: [message, ...state.logs].slice(0, 50),
+  logs: [message, ...state.logs].slice(0, 60),
 });
 
-export const consumeBall = (state: GameState, ball: BallType): GameState => ({
-  ...state,
-  ballBag: {
-    ...state.ballBag,
-    [ball]: Math.max(0, state.ballBag[ball] - 1),
-  },
-});
+export const loadState = (): GameState => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialGameState();
+    const parsed = JSON.parse(raw) as Partial<GameState>;
+    if (parsed.version !== SAVE_VERSION) {
+      return { ...initialGameState(), logs: ['세이브를 새 버전으로 마이그레이션했습니다.'] };
+    }
+    return { ...initialGameState(), ...parsed } as GameState;
+  } catch {
+    return initialGameState();
+  }
+};
+
+export const persistState = (state: GameState) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+};

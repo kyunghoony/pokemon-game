@@ -1,125 +1,94 @@
-# pokemon-game (Vite + React + TypeScript)
+# Pokemon Battle & Capture Game (Vite + React + TS)
 
-기존 단일 `index.html` 게임을 **유지보수 가능한 프론트엔드 앱 구조**로 재구성한 초기 베이스입니다.
+## 1차 리디자인 요약
+이번 마일스톤은 **로그 중심 수집 게임**에서 **전투/포획 장면 중심 인터랙티브 게임**으로의 전환에 집중했습니다.
 
-- 배포 대상: **Vercel**
-- 향후 계획: **Neon(PostgreSQL) 연동**
-- 현재 상태: 기존 로직을 바로 이식하기 좋은 `data / engine / ui` 계층 분리 완료
+- 전투: turn/phase 기반 state machine 도입
+- 포획: 조우-볼선택-투척-흔들림-성공/탈출 단계화
+- UI: 관리형 패널 중심에서 scene 중심 레이아웃으로 전환
+- 저장: localStorage 버전 필드(version=2) 추가
 
-## 실행 방법
-
-```bash
-npm install
-npm run dev
+## 아키텍처
 ```
-
-빌드:
-
-```bash
-npm run build
-npm run preview
-```
-
-## 폴더 구조
-
-```text
-.
-├─ docs/
-│  └─ legacy-single-file-index.html   # 이전 단일 HTML 원본 백업
-├─ src/
-│  ├─ data/                            # 정적 데이터/사전 정의값
-│  │  ├─ pokemonData.ts
-│  │  └─ shopData.ts
-│  ├─ engine/                          # 순수 게임 로직(비즈니스 규칙)
-│  │  ├─ catchEngine.ts
-│  │  ├─ encounterEngine.ts
-│  │  ├─ gameState.ts
-│  │  ├─ random.ts
-│  │  └─ shopEngine.ts
-│  ├─ types/
-│  │  └─ game.ts
-│  ├─ ui/
-│  │  ├─ components/                   # 화면 컴포넌트
-│  │  └─ hooks/                        # 상태 orchestration
-│  ├─ App.tsx
-│  ├─ main.tsx
-│  └─ styles.css
-├─ index.html                          # Vite 엔트리
-├─ vercel.json
-└─ vite.config.ts
-```
-
-## 기존 index.html 로직 분리 기준 (권장)
-
-기존 단일 파일의 로직을 아래 기준으로 점진 이전하면 됩니다.
-
-### 1) `data` 계층
-
-- 대상: 포켓몬 도감 원본, 타입 상성표, 상점 아이템 목록, 밸런스 상수
-- 원칙:
-  - **순수 데이터만** 둔다 (함수/DOM 접근 금지)
-  - 향후 Neon 도입 시, `data`는 로컬 fallback 또는 seed 용도로 축소 가능
-
-예시:
-- `pokemonRawData.ts`
-- `typeChart.ts`
-- `economyConfig.ts`
-
-### 2) `engine` 계층
-
-- 대상: 포획 확률 계산, 조우 가중치 뽑기, 상점 구매 처리, 배틀 판정
-- 원칙:
-  - 입력과 출력이 명확한 **순수 함수** 중심
-  - React, DOM, localStorage 의존성 제거
-  - 테스트 작성이 쉬운 형태 유지
-
-예시:
-- `catchEngine.ts`: `tryCatch(pokemon, ballType)`
-- `encounterEngine.ts`: `createEncounter(pool)`
-- `shopEngine.ts`: `buyItem(state, itemId)`
-
-### 3) `ui` 계층
-
-- 대상: 컴포넌트 렌더링, 사용자 이벤트, 상태 연결
-- 원칙:
-  - `useGameController` 같은 훅에서 `engine` 함수 조합
-  - 컴포넌트는 props 기반으로 최대한 dumb 하게 유지
-
-예시:
-- `ui/hooks/useGameController.ts`
-- `ui/components/*`
-
-## Vercel 배포
-
-이미 `vercel.json`이 포함되어 있어 기본 빌드가 가능합니다.
-
-- Framework: `vite`
-- Build Command: `npm run build`
-- Output: `dist`
-
-## Neon 연동 확장 포인트
-
-추후 서버/DB를 붙일 때 권장 흐름:
-
-1. `/api/*` (Vercel Functions 또는 별도 백엔드)에서 Neon 접근
-2. 프론트는 `src/services/`를 추가해서 API 호출 분리
-3. `engine`은 그대로 유지하고, 데이터 입수 방식만 API로 교체
-
-추천 추가 디렉토리:
-
-```text
 src/
-├─ services/
-│  ├─ apiClient.ts
-│  ├─ trainerService.ts
-│  └─ collectionService.ts
-└─ features/
-   ├─ encounter/
-   ├─ battle/
-   └─ collection/
+  data/
+    pokemonData.ts
+    moves/moveData.ts
+    items/itemData.ts
+  engine/
+    battle/
+      battleMachine.ts
+      battleResolver.ts
+      battleEffects.ts
+      ai.ts
+    capture/
+      captureMachine.ts
+      captureResolver.ts
+    shared/
+      rng.ts
+    gameState.ts
+    shopEngine.ts
+  hooks/
+    useGameController.ts
+    useBattleController.ts
+    useEncounterController.ts
+  ui/
+    battle/BattleScene.tsx
+    encounter/EncounterScene.tsx
+    collection/CollectionPanel.tsx
+    shop/ShopPanel.tsx
+    shared/LogPanel.tsx
 ```
 
-## 마이그레이션 팁
+## 상태 머신 설계
+### Battle phase
+- battle_intro
+- turn_start
+- choose_action
+- choose_move
+- action_resolution
+- forced_switch
+- turn_end
+- battle_end
 
-- `docs/legacy-single-file-index.html`을 기준으로, 기능 단위(조우/포획/상점/배틀/도감)로 잘라 단계적으로 이전하세요.
-- 먼저 데이터 상수들을 `src/data`로 옮긴 뒤, 해당 상수를 참조하는 계산 함수를 `src/engine`으로 이동하면 충돌이 적습니다.
+추가 규칙:
+- PP 소모, PP 고갈 시 발버둥
+- 발버둥 반동 데미지
+- 속도 + 우선도에 따른 행동 순서
+- 기절 직후 자동 연속 공격 금지, forced switch로 분기
+
+### Capture phase
+- encounter_intro
+- ball_select
+- throwing
+- capture_roll
+- shake_1~3 (event)
+- caught / breakout
+- encounter_continue
+
+포획 확률 적용 순서(코드에 명시):
+1. baseChance (포켓몬 고유)
+2. charmBonus
+3. retryBonus
+4. ballBonus
+5. finalChance clamp
+6. roll 비교
+
+## UX 리디자인 포인트
+- 배경/포켓몬/FX/커맨드 레이어 분리
+- 기술 사용 시 타격/데미지 팝업 애니메이션
+- 포획 시 투척 궤적 + 흔들림 단계 표시
+- 모바일: 하단 중심 액션 밀도 유지
+
+## 마이그레이션 플랜
+1. 데이터 분리: 포켓몬/기술/볼을 독립 데이터 파일로 이동
+2. 엔진 분리: battle/capture 로직을 UI와 분리
+3. UI 장면화: 전투/포획 scene 컴포넌트 도입
+4. 점진 확장: moves/pokemon DB 확장, 상태이상/스킬 이펙트 확장
+5. 향후: sound hook 및 canvas/webgl 렌더러 교체 가능
+
+## 향후 확장 포인트
+- `EngineEvent`를 통한 사운드 큐 연결
+- `BattleAnimationLayer`, `DamagePopup` 컴포넌트 분리
+- AI 전략 개선(교체/상성 고려)
+- 전설/환상 전용 조우 연출 프리셋
